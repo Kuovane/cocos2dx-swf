@@ -190,8 +190,8 @@ bool CCSWFNode::initWithSWFFile(const char* file)
         imp->release();
         return false;
     }
-	m_movieWidth = (imp->m_movie->m_def->m_frame_size.m_x_max - imp->m_movie->m_def->m_frame_size.m_x_min) ;
-	m_movieHeight = (imp->m_movie->m_def->m_frame_size.m_y_max - imp->m_movie->m_def->m_frame_size.m_y_min) ;
+	m_movieWidth = (imp->m_movie->m_def->m_frame_size.m_x_max - imp->m_movie->m_def->m_frame_size.m_x_min)/20.0 ;
+	m_movieHeight = (imp->m_movie->m_def->m_frame_size.m_y_max - imp->m_movie->m_def->m_frame_size.m_y_min)/20.0 ;
     m_localScaleX = (imp->m_movie->get_movie_width() / m_movieWidth);
     m_localScaleY = -(imp->m_movie->get_movie_height() / m_movieHeight);
     m_scaleX = 1.0;
@@ -375,214 +375,44 @@ bool CCSWFNode::getRepeat()
 void CCSWFNode::update(float dt)
 {
 
-    bool tobestop = false;
-    int iFrame = imp->m_movie->get_current_frame();
-    if (m_listener && iFrame == iListenFrame) {
-        (m_listener->*m_pfnSelector)(this);
-    }
-    if(! repeat){
-        if (iFrame == iFrameCount - 1) {
-            tobestop = true;
-        }
-    }
-    imp->m_movie->advance(dt);
-    
-    if(tobestop){
-        this->stopAction();
-        if(m_endListener){
-            //(this->m_endListener->*m_pfnEndSelector)(this);
-        }
-    }
+	bool tobestop = false;
+	int iFrame = imp->m_movie->get_current_frame();
+	if (m_listener && iFrame == iListenFrame) {
+		(m_listener->*m_pfnSelector)(this);
+	}
+	if (!repeat) {
+		if (iFrame == iFrameCount - 1) {
+			tobestop = true;
+		}
+	}
+	imp->m_movie->advance(dt);
 
-//    CCLOG(".....");
-    // TODO: Enable sound //
-    // sound->advance(dt);
+	if (tobestop) {
+		this->stopAction();
+		if (m_endListener) {
+			//(this->m_endListener->*m_pfnEndSelector)(this);
+		}
+	}
 }
-#define STRINGIFY(A)  #A
-const char* ColorVertexShader1 = STRINGIFY(
-attribute vec4 a_position;
-uniform mat4 Projection;
-uniform mat4 u_MVPMatrix;
-void main(void)
-{
-    vec4 tmp;
-    tmp =  Projection * u_MVPMatrix * a_position;
-//    tmp = u_MVPMatrix * a_position;
-//    tmp = a_position;
-    
-    //    tmp.x *= -1.0;
-//    tmp.y *= -1.0;
-    gl_Position = tmp;
-    
-}
-);
-
-const char* ColorFragmentShader1 = STRINGIFY(
-uniform lowp vec4 u_color;
-                                            
-void main(void)
-{
-    gl_FragColor = u_color;
-}
-);
-unsigned int m_currentProgram = 0;
-
-void ApplyOrtho(float maxX, float maxY)
-{
-    
-    //        maxX = 1024*20/2;
-    //        maxY = 768*20/2;
-    float a = 1.0f / maxX;
-    float b = 1.0f / maxY;
-    float ortho[16] = {
-        a, 0,  0, 0,
-        0, b,  0, 0,
-        0, 0, -1, 0,
-        0, 0,  0, 1
-    };
-    
-    GLint projectionUniform = glGetUniformLocation(m_currentProgram, "Projection");
-    glUniformMatrix4fv(projectionUniform, 1, 0, &ortho[0]);
-    CHECK_GL_ERROR_DEBUG();
-}
-void ApplyMatrix()
-{
-    float	mat[16]={
-//        1.0f/512,    0,              0,              0,
-//        0,              1.0f/384,    0,              0,
-//        0,0,-0.000976562,   0,
-//        -0.273438,-0.234375,0,1,
-        
-        1/512,0,0,0,
-        0,-1/384,0,0,
-        0,0,-1/1024,0,
-//        0,0,0,1,
-        -372,-474,0,1,
-    };
-
-    GLint modelviewUniform = glGetUniformLocation(m_currentProgram, "u_MVPMatrix");
-    glUniformMatrix4fv(modelviewUniform, 1, 0, mat);
-    CHECK_GL_ERROR_DEBUG();
-}
-static void ApplyColor()
-{
-    GLfloat color[4];
-    {
-        color[0] = 0.5;
-        color[1] = 0.5;
-        color[2] = 1.0;
-        color[3] = 1.0;
-    }
-    
-    GLint lineColorSlot = glGetUniformLocation(m_currentProgram, "u_color");
-    glUniform4fv(lineColorSlot, 1, color);
-    CHECK_GL_ERROR_DEBUG();
-    
-}
-GLuint BuildShader(const char* source, GLenum shaderType)
-{
-    GLuint shaderHandle = glCreateShader(shaderType);
-    glShaderSource(shaderHandle, 1, &source, 0);
-    glCompileShader(shaderHandle);
-    
-    GLint compileSuccess;
-    glGetShaderiv(shaderHandle, GL_COMPILE_STATUS, &compileSuccess);
-    
-    if (compileSuccess == GL_FALSE) {
-        GLchar messages[256];
-        glGetShaderInfoLog(shaderHandle, sizeof(messages), 0, &messages[0]);
-        printf("%s", messages);
-        exit(1);
-    }
-    
-    return shaderHandle;
-}
-
-GLuint BuildProgram(const char* vertexShaderSource,
-                    const char* fragmentShaderSource) 
-{
-    GLuint vertexShader = BuildShader(vertexShaderSource, GL_VERTEX_SHADER);
-    GLuint fragmentShader = BuildShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
-    
-    GLuint programHandle = glCreateProgram();
-    glAttachShader(programHandle, vertexShader);
-    glAttachShader(programHandle, fragmentShader);
-    glLinkProgram(programHandle);
-    
-    GLint linkSuccess;
-    glGetProgramiv(programHandle, GL_LINK_STATUS, &linkSuccess);
-    if (linkSuccess == GL_FALSE) {
-        GLchar messages[256];
-        glGetProgramInfoLog(programHandle, sizeof(messages), 0, &messages[0]);
-        printf("%s", messages);
-        
-        exit(1);
-    }
-    
-    return programHandle;
-}
-void render()
-{
-    m_currentProgram = BuildProgram(ColorVertexShader1, ColorFragmentShader1);
-    CHECK_GL_ERROR_DEBUG();
-    
-    kmMat4 matrixP;
-	kmMat4 matrixMV;
-	kmMat4 matrixMVP;
-	
-	kmGLGetMatrix(KM_GL_PROJECTION, &matrixP );
-	kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
-	
-	kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
-    
-#if CC_ENABLE_GL_STATE_CACHE
-    ccGLUseProgram(0);
-#endif
-    ApplyColor();
-//    ApplyOrtho(512, 384);
-//    ApplyMatrix();
-    
-    GLint projectionUniform = glGetUniformLocation(m_currentProgram, "Projection");
-    glUniformMatrix4fv(projectionUniform, 1, 0, &matrixP.m[0]);
-    CHECK_GL_ERROR_DEBUG();
-
-    GLint modelviewUniform = glGetUniformLocation(m_currentProgram, "u_MVPMatrix");
-    glUniformMatrix4fv(modelviewUniform, 1, 0, &matrixMV.m[0]);
-    CHECK_GL_ERROR_DEBUG();
-    
-    GLuint positionSlot = glGetAttribLocation(m_currentProgram, "a_position");
-    glEnableVertexAttribArray(positionSlot);
-    float fcoords[8] ={
-        80,-60,
-        5680,-60,
-        80,3540,
-        5680,3540,
-    };
-    glVertexAttribPointer(positionSlot,2, GL_FLOAT,GL_FALSE, 0, fcoords);
-    CHECK_GL_ERROR_DEBUG();
-    
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    CHECK_GL_ERROR_DEBUG();
-}
-
 
 void CCSWFNode::onDraw(const Mat4& transform, bool /*transformUpdated*/)
 {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	kmMat4 matrixP;
-	kmMat4 matrixMV;
-	kmMat4 matrixMVP;
-
-	//kmGLGetMatrix(KM_GL_PROJECTION, &matrixP );
-	//kmGLGetMatrix(KM_GL_MODELVIEW, &matrixMV );
-   // kmMat4Multiply(&matrixMVP, &matrixP, &matrixMV);
 
 #if CC_ENABLE_GL_STATE_CACHE
 	GL::useProgram(0);//valid program is NON_ZERO unsigned int
 #endif
-	auto &s = Director::getInstance()->getWinSize();
-	float m[16] = { 0.00,0,0,s.width, 0,0.00,0,s.height, 0,0,1,0, 0,0,0,1 };
+
+	auto sAnchorPoint = this->getAnchorPoint();
+	auto sSize = this->getContentSize();
+	auto wp = this->getParent()->convertToNodeSpace(this->getPosition());
+
+	//auto &s = Director::getInstance()->getWinSize();
+	float dx = sSize.width*sAnchorPoint.x;
+	float dy = sSize.height*sAnchorPoint.y;
+
+	float m[16] = { 0,0,0,wp.x - dx, 0,0,0,wp.y+sSize.height - dy, 0,0,1,0, 0,0,0,1 };
 	//imp->m_movie->display(&matrixMVP.m[0]);
 	auto pre = utils::getTimeInMilliseconds();
 	imp->m_movie->display(&m[0]);
@@ -590,9 +420,6 @@ void CCSWFNode::onDraw(const Mat4& transform, bool /*transformUpdated*/)
 	CCLOG("%d", cur - pre);
 	CHECK_GL_ERROR_DEBUG();
 
-	//render();
-
-   // glBlendFunc(CC_BLEND_SRC, CC_BLEND_DST);
 }
 
 void CCSWFNode::draw(Renderer *renderer, const Mat4 &transform, uint32_t flags)

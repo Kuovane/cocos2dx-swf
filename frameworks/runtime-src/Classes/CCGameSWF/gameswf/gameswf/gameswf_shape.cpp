@@ -1666,7 +1666,7 @@ namespace gameswf
 		}
 
 		// Construct a new mesh to handle this error tolerance.
-		mesh_set*	m = new mesh_set(this, object_space_max_error * 0.75f);
+		mesh_set*	m = new mesh_set(this, object_space_max_error * 0.9f);
 		m_cached_meshes.push_back(m);
 		m->display(mat, cx, fill_styles, line_styles, bm);
 		sort_and_clean_meshes();

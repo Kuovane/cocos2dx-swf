@@ -129,12 +129,22 @@ bool AppDelegate::applicationDidFinishLaunching()
     }
 
 	auto pScene =  Scene::create();
+
+
+	auto szie = Director::getInstance()->getWinSize();
+	auto pSrite = Sprite::create("HelloWorld.png");
+	pScene->addChild(pSrite, -1);
+	pSrite->setPosition(0, szie.height);
+
 	CCSWFNode *swf = CCSWFNode::create("55.swf");
-	swf->setPosition(ccp(512, 320));
+	swf->setPosition(ccp(100, 200));
+	swf->setAnchorPoint(ccp(0, 0));
 	swf->setRepeat(true);
 	swf->runAction();
-	pScene->addChild(swf);
+	pScene->addChild(swf,1);
 	//Director::getInstance()->getRunningScene()->addChild(swf);
+
+
 	Director::getInstance()->runWithScene(pScene);
 
     return true;

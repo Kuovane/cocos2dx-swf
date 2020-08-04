@@ -614,14 +614,9 @@ struct render_handler_ogles : public gameswf::render_handler
 			{
 				useProgram(m_ColorProgram);
 				ApplyColor(m_color);
-				//glBlendFunc(GL_ONE, GL_ZERO);
-
-				//				apply_color(m_color);
-				//				glDisable(GL_TEXTURE_2D);
 			}
 			else
-				//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				//glBlendFunc(GL_ONE, GL_ZERO);
+
 				if (m_mode == BITMAP_WRAP || m_mode == BITMAP_CLAMP)
 				{
 					assert(m_bitmap_info != NULL);
@@ -657,37 +652,19 @@ struct render_handler_ogles : public gameswf::render_handler
 						float	inv_height = 1.0f / m_bitmap_info->get_height();
 
 						const gameswf::matrix&	m = m_bitmap_matrix;
-						//		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-						//	float	p[4] = { 0, 0, 0, 0 };
+
 						pS[0] = m.m_[0][0] * inv_width;
 						pS[1] = m.m_[0][1] * inv_width;
 						pS[2] = 0;
 						pS[3] = m.m_[0][2] * inv_width;
-						//	glTexGenfv(GL_S, GL_OBJECT_PLANE, p);
-						//	glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+
 						pT[0] = m.m_[1][0] * inv_height;
 						pT[1] = m.m_[1][1] * inv_height;
 						pT[2] = 0;
 						pT[3] = m.m_[1][2] * inv_height;
-						//	glTexGenfv(GL_T, GL_OBJECT_PLANE, p);
+
 					}
 				}
-		}
-
-
-		void initVAO(unsigned char * pData, int size)
-		{
-			if (m_vertexBufferId == 0)
-			{
-				//	glGenBuffers(1, &m_vertexBufferId);
-				//	glGenVertexArrays(1, &m_vertexArrayId);
-				//	glBindVertexArray(m_vertexArrayId);//绑定VAO后，后面glVertexAttribPointer会自动存储到VAO中
-				//	glBindBuffer(GL_ARRAY_BUFFER, m_vertexBufferId);
-				//	glBufferData(GL_ARRAY_BUFFER, size, pData, GL_STATIC_DRAW);
-					//glVertexAttribPointer(kVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, 8, (void*)0);
-				//	glEnableVertexAttribArray(0);
-
-			}
 		}
 
 		bool	needs_second_pass() const
@@ -710,38 +687,18 @@ struct render_handler_ogles : public gameswf::render_handler
 		void	apply_second_pass(bool bGenImageMode) const
 			// Set OpenGL state for a necessary second pass.
 		{
-			//assert(needs_second_pass());
-
-			// The additive color also seems to be modulated by the texture. So,
-			// maybe we can fake this in one pass using using the mean value of
-			// the colors: c0*t+c1*t = ((c0+c1)/2) * t*2
-			// I don't know what the alpha component of the color is for.
-			//glDisable(GL_TEXTURE_2D);
-			//chenee
-			//			glColor4f(
-			//                      m_bitmap_color_transform.m_[0][1] / 255.0f,
-			//                      m_bitmap_color_transform.m_[1][1] / 255.0f,
-			//                      m_bitmap_color_transform.m_[2][1] / 255.0f,
-			//                      m_bitmap_color_transform.m_[3][1] / 255.0f
-			//                      );
-
 			auto &m = m_bitmap_color_transform.m_;
 			GLfloat mult[4] = { m[0][0],m[1][0],m[2][0],m[3][0] };
 			GLfloat add[4] = { m[0][1] / 255.0f,m[1][1] / 255.0f,m[2][1] / 255.0f,m[3][1] / 255.0f };
-
-
-			//            GLint lineColorSlot = glGetUniformLocation(m_currentProgram, "u_color");
 
 			glUniform4fv(u_MultColor, 1, mult);
 			glUniform4fv(u_AddColor, 1, add);
 			CHECK_GL_ERROR_DEBUG();
 
-			//glBlendFunc(GL_ONE, GL_ONE);
 		}
 
 		void	cleanup_second_pass() const
 		{
-			//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		}
 
 
@@ -858,46 +815,6 @@ struct render_handler_ogles : public gameswf::render_handler
 		m_currentProgram = -111000;//XXX:just make m_currentProgram invalid
 		lineWidth = 0;
 
-		//      glViewport(viewport_x0, viewport_y0, viewport_width, viewport_height);
-
-
-
-		//      glEnable(GL_BLEND);
-		//      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-		//      glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);	// GL_MODULATE
-
-		//      glDisable(GL_TEXTURE_2D);
-
-		// Clear the background, if background color has alpha > 0.
-		//      if (background_color.m_a > 0)
-		//      {
-		//      // Draw a big quad.
-		//      apply_color(background_color);
-		//
-		//      //			glBegin(GL_QUADS);
-		//      //			glVertex2f(x0, y0);
-		//      //			glVertex2f(x1, y0);
-		//      //			glVertex2f(x1, y1);
-		//      //			glVertex2f(x0, y1);
-		//      //			glEnd();
-		//
-		//      GLfloat squareVertices[8];
-		//      squareVertices[0] = x0;
-		//      squareVertices[1] = y0;
-		//      squareVertices[2] = x1;
-		//      squareVertices[3] = y0;
-		//      squareVertices[4] = x0;
-		//      squareVertices[5] = y1;
-		//      squareVertices[6] = x1;
-		//      squareVertices[7] = y1;
-		//
-		//      glVertexPointer(2, GL_FLOAT, 0, squareVertices);
-		//      glEnableClientState(GL_VERTEX_ARRAY);
-		//      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-		//
-		//      glDisableClientState(GL_VERTEX_ARRAY);
-		//      }
 	}
 
 	void setGenImageMode(bool bGenImageMode)
@@ -1005,16 +922,17 @@ struct render_handler_ogles : public gameswf::render_handler
 
 	static void ApplyOrtho(float* mat)
 	{
+		static auto sSize = Director::getInstance()->getWinSize();
 		float w = mat[3];
 		float h = mat[7];
-		float sx = w / 800.0f;
-		float sy = h / 640.0f;
+		float sx = w / sSize.width;
+		float sy = h / sSize.height;
 		float cx = 2 / (1.0 / sx + 1.0 / sx);
 
 		glm::mat4 view(1.0);
 		view = glm::lookAt(glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
-		view = glm::scale(view, glm::vec3(2.0 / (20 * 800.0f), 2.0 / (20 * 640.0f), 1.0f));
-		view = glm::translate(view, glm::vec3(-800 * 10.0f, -640 * 10.0f + (640.0 - h) * 20, 0.0f));
+		view = glm::scale(view, glm::vec3(2.0 / (20 * sSize.width), 2.0 / (20 * sSize.height), 1.0f));
+		view = glm::translate(view, glm::vec3(-sSize.width * 10.0f+w*20.0f, -sSize.height * 10.0f + (sSize.height - h) * 20, 0.0f));
 		//view = glm::rotate(view, glm::radians(180.0f), glm::vec3(0, 0, 1.0f));
 
 
@@ -1081,7 +999,7 @@ struct render_handler_ogles : public gameswf::render_handler
 	std::map<unsigned int, unsigned int> m_sMapTextrueId;
 	unsigned int getVAOId(const void* coords, int vertex_count)
 	{
-#if 1
+#if 0
 			unsigned int id = XXH32((const void*)coords, vertex_count*2, 0);
 			if (m_currentProgram == m_TextureProgram)
 			{
